@@ -1,0 +1,175 @@
+import Image from "next/image";
+import { Suspense } from "react";
+import { fetchCountries, fetchIncidents } from "@/lib/supabase";
+import { FilterBar } from "@/components/FilterBar";
+import { Timeline } from "@/components/Timeline";
+import { ScrollCounter } from "@/components/ScrollCounter";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import type { LayoutMode } from "@/components/Timeline";
+
+/**
+ * Home page — Server Component.
+ *
+ * URL params:
+ *   ?type=ai_harm|layoff|regulatory|model_failure  — filter by incident type
+ *   ?country=US|GB|...                              — filter by country code
+ *   ?q=search+term                                  — full-text search
+ *   ?layout=single|two-column                       — card layout mode
+ */
+
+interface PageProps {
+  searchParams: Promise<{
+    type?: string;
+    country?: string;
+    q?: string;
+    layout?: string;
+  }>;
+}
+
+export default async function Page({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const activeType = params.type ?? "all";
+  const activeCountry = params.country ?? "all";
+  const activeSearch = params.q ?? "";
+  const activeLayout: LayoutMode =
+    params.layout === "single" ? "single" : "two-column";
+
+  // Fetch data server-side
+  const [allIncidents, countries] = await Promise.all([
+    fetchIncidents({ type: activeType, country: activeCountry }),
+    fetchCountries(),
+  ]);
+
+  // Client-side text search on already-filtered results
+  const incidents =
+    activeSearch.trim().length > 0
+      ? allIncidents.filter((inc) => {
+          const haystack =
+            `${inc.title} ${inc.description} ${inc.companies.join(" ")} ${inc.tags.join(" ")}`.toLowerCase();
+          return haystack.includes(activeSearch.toLowerCase());
+        })
+      : allIncidents;
+
+  return (
+    // pb-16 leaves room for the fixed bottom counter bar
+    <div className="flex min-h-screen flex-col pb-16">
+      {/* ── Site header ──────────────────────────────────────────────── */}
+      <header className="relative overflow-hidden border-b border-neutral-800 bg-neutral-950">
+        <div className="mx-auto flex max-w-5xl items-center gap-5 px-4 py-5">
+          {/* Meme image */}
+          <div className="relative flex-shrink-0">
+            <Image
+              src="/ai_is_fine.jpg"
+              alt="AI Is Fine meme — dog sitting calmly in a burning room"
+              width={80}
+              height={120}
+              className="rounded-lg object-cover shadow-lg shadow-orange-900/40 ring-2 ring-orange-500/30"
+              priority
+            />
+            {/* Subtle fire glow underneath */}
+            <div
+              aria-hidden
+              className="absolute -inset-1 -z-10 rounded-xl bg-orange-600/20 blur-lg"
+            />
+          </div>
+
+          {/* Title block */}
+          <div className="flex flex-1 flex-col gap-1">
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+                AI Is Going Just Great
+              </h1>
+              {/* Theme toggle — top-right of header */}
+              <ThemeToggle className="mt-0.5 flex-shrink-0" />
+            </div>
+            <p className="max-w-lg text-sm text-neutral-400">
+              A running timeline of AI harm, layoffs, regulatory actions &amp;
+              model failures ·{" "}
+              <a
+                href="https://github.com/contrasto-ai/contrasto_ai"
+                className="underline hover:text-neutral-200"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Contrasto AI
+              </a>
+            </p>
+            <p className="text-xs text-neutral-500">
+              <span className="font-semibold text-neutral-300">
+                {incidents.length}
+              </span>{" "}
+              incidents — scroll down to watch the counter burn 🔥
+            </p>
+          </div>
+        </div>
+
+        {/* Subtle fire-gradient right edge (decorative) */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-orange-950/30 to-transparent"
+        />
+      </header>
+
+      {/* ── FilterBar (type pills, country, search, layout toggle) ────── */}
+      <Suspense fallback={<div className="h-14 bg-white dark:bg-neutral-900" />}>
+        <FilterBar
+          countries={countries}
+          activeType={activeType}
+          activeCountry={activeCountry}
+          activeSearch={activeSearch}
+          activeLayout={activeLayout}
+        />
+      </Suspense>
+
+      {/* ── Timeline ─────────────────────────────────────────────────── */}
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        <Timeline incidents={incidents} layout={activeLayout} />
+      </main>
+
+      {/* ── Footer ───────────────────────────────────────────────────── */}
+      <footer className="border-t border-neutral-800 bg-neutral-950 px-4 py-6 text-center text-xs text-neutral-500">
+        <p>
+          Inspired by{" "}
+          <a
+            href="https://web3isgoinggreat.com"
+            className="underline hover:text-neutral-300"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            web3isgoinggreat.com
+          </a>{" "}
+          by Molly White · Built with{" "}
+          <a
+            href="https://supabase.com"
+            className="underline hover:text-neutral-300"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Supabase
+          </a>{" "}
+          +{" "}
+          <a
+            href="https://nextjs.org"
+            className="underline hover:text-neutral-300"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Next.js
+          </a>
+        </p>
+        <p className="mt-1">
+          Data is for informational purposes only. Sources are linked in each
+          entry.
+        </p>
+      </footer>
+
+      {/* ── ScrollCounter — fixed bottom bar ─────────────────────────── */}
+      {/*
+          Receives all (unfiltered) incidents so the grand-total overlay
+          always shows all-time stats regardless of active filters.
+          The scroll observer fires on whatever cards are in the DOM.
+      */}
+      <ScrollCounter incidents={allIncidents} />
+    </div>
+  );
+}

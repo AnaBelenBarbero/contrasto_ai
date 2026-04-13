@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
+
+/* Smooth scrolling for in-page navigation */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Dark mode base overrides */
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-50;
+  }
+
+  /* Improve date input appearance */
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply cursor-pointer;
+  }
+}
