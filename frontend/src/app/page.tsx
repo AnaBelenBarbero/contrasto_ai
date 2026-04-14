@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { Suspense } from "react";
-import { fetchCountries, fetchIncidents } from "@/lib/supabase";
+import { fetchCountries, fetchIncidents, fetchCounters } from "@/lib/supabase.server";
+import { PAGE_SIZE } from "@/lib/supabase";
 import { FilterBar } from "@/components/FilterBar";
-import { Timeline } from "@/components/Timeline";
-import { ScrollCounter } from "@/components/ScrollCounter";
+import { IncidentFeed } from "@/components/IncidentFeed";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import type { LayoutMode } from "@/components/Timeline";
 
@@ -34,21 +34,13 @@ export default async function Page({ searchParams }: PageProps) {
   const activeLayout: LayoutMode =
     params.layout === "single" ? "single" : "two-column";
 
-  // Fetch data server-side
-  const [allIncidents, countries] = await Promise.all([
-    fetchIncidents({ type: activeType, country: activeCountry }),
-    fetchCountries(),
-  ]);
-
-  // Client-side text search on already-filtered results
-  const incidents =
-    activeSearch.trim().length > 0
-      ? allIncidents.filter((inc) => {
-          const haystack =
-            `${inc.title} ${inc.description} ${inc.companies.join(" ")} ${inc.tags.join(" ")}`.toLowerCase();
-          return haystack.includes(activeSearch.toLowerCase());
-        })
-      : allIncidents;
+  // Fetch first page + country list + DB grand totals in parallel
+  const [{ data: initialIncidents, hasMore: initialHasMore }, countries, grandTotals] =
+    await Promise.all([
+      fetchIncidents({ type: activeType, country: activeCountry, page: 0, pageSize: PAGE_SIZE }),
+      fetchCountries(),
+      fetchCounters(),
+    ]);
 
   return (
     // pb-16 leaves room for the fixed bottom counter bar
@@ -96,9 +88,9 @@ export default async function Page({ searchParams }: PageProps) {
             </p>
             <p className="text-xs text-neutral-500">
               <span className="font-semibold text-neutral-300">
-                {incidents.length}
+                {grandTotals.total_incidents.toLocaleString("en-US")}
               </span>{" "}
-              incidents — scroll down to watch the counter burn 🔥
+              incidents tracked — scroll down to watch the counter burn 🔥
             </p>
           </div>
         </div>
@@ -121,9 +113,18 @@ export default async function Page({ searchParams }: PageProps) {
         />
       </Suspense>
 
-      {/* ── Timeline ─────────────────────────────────────────────────── */}
+      {/* ── Timeline + infinite scroll + counter ─────────────────────── */}
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
-        <Timeline incidents={incidents} layout={activeLayout} />
+        <IncidentFeed
+          initialIncidents={initialIncidents}
+          initialHasMore={initialHasMore}
+          grandTotals={grandTotals}
+          dbTotal={grandTotals.total_incidents}
+          type={activeType}
+          country={activeCountry}
+          search={activeSearch}
+          layout={activeLayout}
+        />
       </main>
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
@@ -163,13 +164,6 @@ export default async function Page({ searchParams }: PageProps) {
         </p>
       </footer>
 
-      {/* ── ScrollCounter — fixed bottom bar ─────────────────────────── */}
-      {/*
-          Receives all (unfiltered) incidents so the grand-total overlay
-          always shows all-time stats regardless of active filters.
-          The scroll observer fires on whatever cards are in the DOM.
-      */}
-      <ScrollCounter incidents={allIncidents} />
     </div>
   );
 }

@@ -15,13 +15,18 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { aggregateCounters, buildCounterTiles, formatUSD } from "@/lib/counters";
+import type { AggregatedCounters } from "@/lib/counters";
 import { useCounterSettings } from "@/hooks/useCounterSettings";
 import { SettingsPanel } from "./SettingsPanel";
-import type { AnyIncident } from "@/lib/types";
+import type { AnyIncident, CounterTotals } from "@/lib/types";
 
 interface ScrollCounterProps {
-  /** Full (unfiltered) incident list — used for grand-total mode and lookup. */
+  /** Currently loaded incidents — used for scroll-driven "seen so far" counting. */
   incidents: AnyIncident[];
+  /** All-time aggregates from the DB (v_counters view). Used for grand-total overlay. */
+  grandTotals: CounterTotals;
+  /** Total incident count in the DB — denominator for the scroll progress bar. */
+  dbTotal: number;
 }
 
 // ── Animated number hook ──────────────────────────────────────────────────────
@@ -85,7 +90,12 @@ function AnimatedTile({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export function ScrollCounter({ incidents }: ScrollCounterProps) {
+/** Promote DB CounterTotals to AggregatedCounters (adds total_companies = 0). */
+function dbTotalsToAggregated(t: CounterTotals): AggregatedCounters {
+  return { ...t, total_companies: 0 };
+}
+
+export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounterProps) {
   const [config, updateConfig, resetConfig] = useCounterSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [grandTotalOpen, setGrandTotalOpen] = useState(false);
@@ -142,14 +152,15 @@ export function ScrollCounter({ incidents }: ScrollCounterProps) {
     };
   }, [incidents]); // ← re-runs (and resets) whenever the incident list changes
 
-  // Compute running totals
-  const activeIncidents = showGrandTotal
-    ? incidents
-    : incidents.filter((inc) => seenIds.has(inc.id));
+  // "Seen so far" — incidents whose cards have scrolled past the 60% mark
+  const seenIncidents = incidents.filter((inc) => seenIds.has(inc.id));
+  const seenTotals = aggregateCounters(seenIncidents);
 
-  const totals = aggregateCounters(activeIncidents);
-  const grandTotals = aggregateCounters(incidents);
-  const tiles = buildCounterTiles(totals, config);
+  // Counter bar tiles: use DB grand totals when pinned, scroll totals otherwise
+  const tiles = buildCounterTiles(
+    showGrandTotal ? dbTotalsToAggregated(grandTotals) : seenTotals,
+    config
+  );
 
   const handleToggleGrandTotal = useCallback(() => {
     setShowGrandTotal((prev) => !prev);
@@ -181,6 +192,7 @@ export function ScrollCounter({ incidents }: ScrollCounterProps) {
         />
       )}
 
+
       {/* Bottom counter bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800 bg-neutral-950/95 backdrop-blur-sm shadow-2xl">
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-2.5">
@@ -192,8 +204,8 @@ export function ScrollCounter({ incidents }: ScrollCounterProps) {
             </span>
             <span className="text-[9px] text-neutral-600">
               {showGrandTotal
-                ? `${incidents.length} incidents`
-                : `${seenIds.size} / ${incidents.length}`}
+                ? `${grandTotals.total_incidents.toLocaleString("en-US")} incidents`
+                : `${seenIds.size} / ${dbTotal.toLocaleString("en-US")}`}
             </span>
           </div>
 
@@ -255,8 +267,8 @@ export function ScrollCounter({ incidents }: ScrollCounterProps) {
           </div>
         </div>
 
-        {/* Scroll progress bar */}
-        <ScrollProgress seenCount={seenIds.size} total={incidents.length} />
+        {/* Scroll progress bar — denominator is full DB count, not just loaded page */}
+        <ScrollProgress seenCount={seenIds.size} total={dbTotal} />
       </div>
     </>
   );
@@ -290,7 +302,8 @@ function ScrollProgress({
 // ── Grand total overlay ───────────────────────────────────────────────────────
 
 interface GrandTotalOverlayProps {
-  totals: ReturnType<typeof aggregateCounters>;
+  /** DB-sourced all-time totals from v_counters view. */
+  totals: CounterTotals;
   seenCount: number;
   onClose: () => void;
   onPinGrandTotal: () => void;
@@ -353,8 +366,8 @@ function GrandTotalOverlay({
             color="text-violet-400"
           />
           <StatCard
-            value={totals.total_companies.toLocaleString("en-US")}
-            label="Companies"
+            value={totals.model_failures.toLocaleString("en-US")}
+            label="Model Failures"
             color="text-rose-400"
           />
         </div>
