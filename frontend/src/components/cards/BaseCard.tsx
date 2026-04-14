@@ -1,5 +1,5 @@
 import Image from "next/image";
-import type { AnyIncident } from "@/lib/types";
+import type { AnyIncident, IncidentType } from "@/lib/types";
 import { INCIDENT_TYPE_COLORS, INCIDENT_TYPE_LABELS } from "@/lib/types";
 
 interface BaseCardProps {
@@ -8,16 +8,25 @@ interface BaseCardProps {
   children?: React.ReactNode;
 }
 
+/** Top-accent colour strip per incident type. */
+const ACCENT_CLASSES: Record<IncidentType, string> = {
+  ai_harm: "bg-rose-500",
+  layoff: "bg-amber-500",
+  regulatory: "bg-blue-500",
+  model_failure: "bg-violet-500",
+};
+
 /**
  * Shared card shell used by all four incident type components.
  *
- * Renders: coloured left border, type badge, optional image, date,
- * title, description, company/country chips, and source links.
- * Type-specific metadata is injected via `children`.
+ * Design: coloured 3 px top accent, optional image, date, title, description,
+ * metadata block, company/country chips, source links.
+ * No left border — the center spine provides type context in two-column mode.
  */
 export function BaseCard({ incident, children }: BaseCardProps) {
   const colors = INCIDENT_TYPE_COLORS[incident.incident_type];
   const typeLabel = INCIDENT_TYPE_LABELS[incident.incident_type];
+  const accent = ACCENT_CLASSES[incident.incident_type];
 
   const formattedDate = new Date(incident.date + "T00:00:00").toLocaleDateString(
     "en-GB",
@@ -27,38 +36,45 @@ export function BaseCard({ incident, children }: BaseCardProps) {
   return (
     <article
       data-incident-id={incident.id}
-      className={`
-        relative flex flex-col gap-4 rounded-lg border border-neutral-200
-        bg-white shadow-sm transition-shadow hover:shadow-md
-        dark:border-neutral-800 dark:bg-neutral-900
-        border-l-4 ${colors.border}
-      `}
+      className="
+        relative flex flex-col overflow-hidden rounded-xl
+        bg-white ring-1 ring-black/[0.07]
+        shadow-sm hover:shadow-md
+        transition-shadow duration-200
+        dark:bg-neutral-900 dark:ring-white/[0.07]
+      "
     >
+      {/* Coloured top accent strip */}
+      <div className={`h-[3px] w-full flex-shrink-0 ${accent}`} />
+
       {/* Optional image */}
       {incident.image_url && (
-        <div className="relative h-44 w-full overflow-hidden rounded-t-lg">
+        <div className="relative h-40 w-full overflow-hidden">
           <Image
             src={incident.image_url}
             alt={incident.title}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, 700px"
+            sizes="(max-width: 768px) 100vw, 560px"
           />
+          {/* Fade at bottom for text legibility when image is close to content */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-white/70 dark:from-neutral-900/70" />
         </div>
       )}
 
-      <div className="flex flex-col gap-3 px-5 pb-5 pt-4">
-        {/* Header row: date + type badge */}
+      <div className="flex flex-col gap-3 px-4 pb-4 pt-3">
+        {/* Date + type badge */}
         <div className="flex items-center justify-between gap-2">
           <time
             dateTime={incident.date}
-            className="text-sm font-medium text-neutral-500 dark:text-neutral-400"
+            className="text-[11px] font-medium uppercase tracking-wider text-neutral-400 dark:text-neutral-500"
           >
             {formattedDate}
           </time>
           <span
             className={`
-              inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
+              inline-flex items-center rounded-full px-2 py-0.5
+              text-[10px] font-bold uppercase tracking-wide
               ${colors.badge} ${colors.badgeDark}
             `}
           >
@@ -67,25 +83,25 @@ export function BaseCard({ incident, children }: BaseCardProps) {
         </div>
 
         {/* Title */}
-        <h2 className="text-lg font-bold leading-snug text-neutral-900 dark:text-neutral-50">
+        <h2 className="text-[15px] font-bold leading-snug text-neutral-900 dark:text-neutral-50">
           {incident.title}
         </h2>
 
         {/* Description */}
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {incident.description.split("\n\n").map((para, i) => (
             <p
               key={i}
-              className="text-sm leading-relaxed text-neutral-700 dark:text-neutral-300"
+              className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-400"
             >
               {para}
             </p>
           ))}
         </div>
 
-        {/* Type-specific details */}
+        {/* Type-specific metadata block */}
         {children && (
-          <div className="rounded-md bg-neutral-50 p-3 dark:bg-neutral-800/50">
+          <div className="rounded-lg bg-neutral-50 px-3 py-2.5 ring-1 ring-black/[0.04] dark:bg-neutral-800/60 dark:ring-white/[0.04]">
             {children}
           </div>
         )}
@@ -114,7 +130,7 @@ export function BaseCard({ incident, children }: BaseCardProps) {
             {incident.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded text-xs text-neutral-400 dark:text-neutral-500"
+                className="text-[11px] text-neutral-400 dark:text-neutral-600"
               >
                 #{tag}
               </span>
@@ -124,22 +140,30 @@ export function BaseCard({ incident, children }: BaseCardProps) {
 
         {/* Source links */}
         {incident.links.length > 0 && (
-          <div className="flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-3 dark:border-neutral-800">
-            <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">
+          <div className="flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-2.5 dark:border-neutral-800">
+            <span className="text-[11px] text-neutral-400 dark:text-neutral-500">
               Source:
             </span>
-            {incident.links.slice(0, 3).map((url, i) => (
-              <a
-                key={i}
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-blue-600 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-              >
-                {new URL(url).hostname.replace("www.", "")}
-              </a>
-            ))}
-            <span className="ml-auto text-xs text-neutral-400 dark:text-neutral-500">
+            {incident.links.slice(0, 3).map((url, i) => {
+              let hostname = url;
+              try {
+                hostname = new URL(url).hostname.replace("www.", "");
+              } catch {
+                // keep raw url as fallback
+              }
+              return (
+                <a
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] text-blue-600 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  {hostname}
+                </a>
+              );
+            })}
+            <span className="ml-auto text-[11px] text-neutral-400 dark:text-neutral-500">
               {incident.source}
             </span>
           </div>
@@ -159,11 +183,11 @@ function Chip({
   variant: "company" | "country";
 }) {
   const base =
-    "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium";
+    "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium";
   const styles =
     variant === "company"
-      ? "bg-neutral-100 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300"
-      : "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300 font-semibold";
+      ? "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+      : "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300 font-semibold";
 
   return <span className={`${base} ${styles}`}>{label}</span>;
 }

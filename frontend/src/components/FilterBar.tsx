@@ -8,7 +8,7 @@
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useRef, useTransition } from "react";
 import type { IncidentType } from "@/lib/types";
 import { INCIDENT_TYPE_LABELS } from "@/lib/types";
 import type { LayoutMode } from "./Timeline";
@@ -37,6 +37,28 @@ const TYPE_ACTIVE_STYLES: Record<string, string> = {
   model_failure: "bg-violet-500 text-white",
 };
 
+/** Hover styles for inactive pills — tinted preview of the type colour. */
+const TYPE_HOVER_STYLES: Record<string, string> = {
+  all: "hover:bg-neutral-700 hover:text-white",
+  ai_harm: "hover:bg-rose-500/20 hover:text-rose-300",
+  layoff: "hover:bg-amber-500/20 hover:text-amber-300",
+  regulatory: "hover:bg-blue-500/20 hover:text-blue-300",
+  model_failure: "hover:bg-violet-500/20 hover:text-violet-300",
+};
+
+/**
+ * Bar background overlay shown while a type filter navigation is pending.
+ * Applied as an absolute inset layer so the existing bg-neutral-900 shows
+ * through at reduced opacity, producing a tinted wash rather than a solid fill.
+ */
+const TYPE_PENDING_OVERLAY: Record<string, string> = {
+  all: "bg-neutral-500/10",
+  ai_harm: "bg-rose-500/10",
+  layoff: "bg-amber-500/10",
+  regulatory: "bg-blue-500/10",
+  model_failure: "bg-violet-500/10",
+};
+
 export function FilterBar({
   countries,
   activeType,
@@ -48,8 +70,19 @@ export function FilterBar({
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  // Tracks the type value that was most recently clicked so we can colour the
+  // bar during the navigation pending window (activeType still holds the old
+  // URL value until the transition completes).
+  const pendingTypeRef = useRef<string>(activeType);
+
+  // Once the transition settles, sync the ref to the confirmed active type.
+  useEffect(() => {
+    if (!isPending) pendingTypeRef.current = activeType;
+  }, [isPending, activeType]);
+
   const updateParam = useCallback(
     (key: string, value: string) => {
+      if (key === "type") pendingTypeRef.current = value || "all";
       const params = new URLSearchParams(searchParams.toString());
       if (!value || value === "all" || value === "") {
         params.delete(key);
@@ -68,12 +101,17 @@ export function FilterBar({
     updateParam("layout", next === "two-column" ? "two-column" : "single");
   }, [activeLayout, updateParam]);
 
+  const pendingOverlay =
+    TYPE_PENDING_OVERLAY[pendingTypeRef.current] ?? TYPE_PENDING_OVERLAY.all;
+
   return (
-    <div
-      className={`border-b border-neutral-800 bg-neutral-900 px-4 py-3 ${
-        isPending ? "opacity-60" : ""
-      }`}
-    >
+    <div className="relative border-b border-neutral-800 bg-neutral-900 px-4 py-3">
+      {/* Coloured wash that fades in while a navigation is pending */}
+      <div
+        className={`pointer-events-none absolute inset-0 transition-opacity duration-300 ${pendingOverlay} ${
+          isPending ? "opacity-100" : "opacity-0"
+        }`}
+      />
       <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         {/* Type pills */}
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by type">
@@ -87,7 +125,7 @@ export function FilterBar({
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
                     ? TYPE_ACTIVE_STYLES[value]
-                    : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
+                    : `bg-neutral-800 text-neutral-300 ${TYPE_HOVER_STYLES[value]}`
                 }`}
               >
                 {label}
