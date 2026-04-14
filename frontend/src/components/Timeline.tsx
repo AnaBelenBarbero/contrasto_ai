@@ -55,7 +55,7 @@ function TwoColumnTimeline({ incidents }: { incidents: AnyIncident[] }) {
   const right = incidents.filter((_, i) => i % 2 !== 0);
 
   return (
-    <div className="flex gap-6 items-start">
+    <div className="flex gap-6 items-start py-4">
       {/* Left column */}
       <div className="flex flex-1 flex-col gap-6">
         {left.map((inc) => (
@@ -83,7 +83,7 @@ function SingleColumnTimeline({ incidents }: { incidents: AnyIncident[] }) {
       {groups.map(({ monthLabel, items }) => (
         <section key={monthLabel}>
           {/* Month header */}
-          <div className="sticky top-[57px] z-20 -mx-4 mb-4 border-b border-neutral-200 bg-neutral-50 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-950">
+          <div className="sticky top-0 z-10 -mx-4 mb-4 border-b border-neutral-200 bg-neutral-50 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-950">
             <h2 className="text-sm font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400">
               {monthLabel}
             </h2>

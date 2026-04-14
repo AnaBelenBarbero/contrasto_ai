@@ -5,9 +5,9 @@ export const metadata: Metadata = {
   title: "AI Is Going Just Great — Incident Tracker",
   description:
     "A running timeline of AI harm events, layoffs, regulatory actions, and model failures. " +
-    "Part of the Contrasto AI governance platform.",
+    "",
   openGraph: {
-    title: "AI Is Going Just Great — Incident Tracker",
+    title: "AI Is Going Just Great. AI Incident and Layoff Tracker",
     description:
       "Track AI harm, layoffs, regulatory fines, and model failures in real time.",
     type: "website",

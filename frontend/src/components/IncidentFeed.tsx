@@ -17,6 +17,7 @@ import { fetchIncidentsBrowser, PAGE_SIZE } from "@/lib/supabase";
 import { Timeline } from "./Timeline";
 import { ScrollCounter } from "./ScrollCounter";
 import type { LayoutMode } from "./Timeline";
+import { COUNTER_POSITION } from "@/lib/types";
 import type { AnyIncident, CounterTotals } from "@/lib/types";
 
 interface IncidentFeedProps {
@@ -105,11 +106,18 @@ export function IncidentFeed({
         })
       : incidents;
 
+  const counter = (
+    <ScrollCounter incidents={incidents} grandTotals={grandTotals} dbTotal={dbTotal} />
+  );
+
   return (
     <>
+      {/* sticky-top: counter renders before the timeline so it sticks below FilterBar */}
+      {COUNTER_POSITION === "sticky-top" && counter}
+
       <Timeline incidents={displayed} layout={layout} />
 
-      {/* Sentinel — invisible div that triggers the next page load */}
+      {/* Sentinel — triggers next page fetch when scrolled into view */}
       <div ref={sentinelRef} className="flex justify-center py-6 text-sm text-neutral-400">
         {loading && "Loading more…"}
         {!loading && !hasMore && incidents.length > 0 && (
@@ -117,11 +125,8 @@ export function IncidentFeed({
         )}
       </div>
 
-      <ScrollCounter
-        incidents={incidents}
-        grandTotals={grandTotals}
-        dbTotal={dbTotal}
-      />
+      {/* fixed-bottom: counter is viewport-fixed, rendered at end of flow */}
+      {COUNTER_POSITION === "fixed-bottom" && counter}
     </>
   );
 }

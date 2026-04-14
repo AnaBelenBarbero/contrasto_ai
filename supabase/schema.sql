@@ -88,6 +88,39 @@ SELECT
   )::int                                                                    AS total_users_affected
 FROM incidents;
 
+-- ── Email leads ───────────────────────────────────────────────────────────────
+-- Stores newsletter subscribers.  Anon can INSERT (subscribe); nobody but
+-- service_role can SELECT the list (privacy-safe).
+
+CREATE TABLE IF NOT EXISTS email_leads (
+  id         BIGSERIAL    PRIMARY KEY,
+  email      TEXT         NOT NULL,
+  source     TEXT         NOT NULL DEFAULT 'header_signup',
+  confirmed  BOOLEAN      NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CONSTRAINT email_leads_email_unique UNIQUE (email),
+  CONSTRAINT email_leads_email_format CHECK (email ~* '^[^@\s]+@[^@\s]+\.[^@\s]+$')
+);
+
+COMMENT ON TABLE email_leads IS
+  'Newsletter subscribers. Anon users may only INSERT; reads are restricted to service_role.';
+
+ALTER TABLE email_leads ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can subscribe — but nobody can read the list back through the anon key.
+CREATE POLICY "email_leads_insert_anon"
+  ON email_leads
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "email_leads_all_service_role"
+  ON email_leads
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- ── Row Level Security ────────────────────────────────────────────────────────
 
 ALTER TABLE incidents ENABLE ROW LEVEL SECURITY;

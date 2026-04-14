@@ -5,6 +5,7 @@ import { PAGE_SIZE } from "@/lib/supabase";
 import { FilterBar } from "@/components/FilterBar";
 import { IncidentFeed } from "@/components/IncidentFeed";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { COUNTER_POSITION } from "@/lib/types";
 import type { LayoutMode } from "@/components/Timeline";
 
 /**
@@ -43,8 +44,9 @@ export default async function Page({ searchParams }: PageProps) {
     ]);
 
   return (
-    // pb-16 leaves room for the fixed bottom counter bar
-    <div className="flex min-h-screen flex-col pb-16">
+    /* pb-[104px] reserves space for the fixed counter bar (metrics row + newsletter row + progress).
+       sticky-top mode needs no bottom padding since the bar is in document flow. */
+    <div className={`flex min-h-screen flex-col ${COUNTER_POSITION === "fixed-bottom" ? "pb-[104px]" : ""}`}>
       {/* ── Site header ──────────────────────────────────────────────── */}
       <header className="relative overflow-hidden border-b border-neutral-800 bg-neutral-950">
         <div className="mx-auto flex max-w-5xl items-center gap-5 px-4 py-5">
@@ -76,16 +78,9 @@ export default async function Page({ searchParams }: PageProps) {
             </div>
             <p className="max-w-lg text-sm text-neutral-400">
               A running timeline of AI harm, layoffs, regulatory actions &amp;
-              model failures ·{" "}
-              <a
-                href="https://github.com/contrasto-ai/contrasto_ai"
-                className="underline hover:text-neutral-200"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Contrasto AI
-              </a>
+              model failures
             </p>
+            <br />
             <p className="text-xs text-neutral-500">
               <span className="font-semibold text-neutral-300">
                 {grandTotals.total_incidents.toLocaleString("en-US")}
@@ -100,6 +95,7 @@ export default async function Page({ searchParams }: PageProps) {
           aria-hidden
           className="pointer-events-none absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-orange-950/30 to-transparent"
         />
+
       </header>
 
       {/* ── FilterBar (type pills, country, search, layout toggle) ────── */}
@@ -114,7 +110,7 @@ export default async function Page({ searchParams }: PageProps) {
       </Suspense>
 
       {/* ── Timeline + infinite scroll + counter ─────────────────────── */}
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4">
         <IncidentFeed
           initialIncidents={initialIncidents}
           initialHasMore={initialHasMore}
@@ -139,24 +135,7 @@ export default async function Page({ searchParams }: PageProps) {
           >
             web3isgoinggreat.com
           </a>{" "}
-          by Molly White · Built with{" "}
-          <a
-            href="https://supabase.com"
-            className="underline hover:text-neutral-300"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Supabase
-          </a>{" "}
-          +{" "}
-          <a
-            href="https://nextjs.org"
-            className="underline hover:text-neutral-300"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Next.js
-          </a>
+          by Molly White
         </p>
         <p className="mt-1">
           Data is for informational purposes only. Sources are linked in each

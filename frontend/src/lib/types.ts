@@ -113,13 +113,37 @@ export interface CounterConfig {
   showCompanies: boolean;
 }
 
-export const DEFAULT_COUNTER_CONFIG: CounterConfig = {
+// ── Counter position ──────────────────────────────────────────────────────────
+
+export type CounterPosition = "fixed-bottom" | "sticky-top";
+
+/**
+ * Where the metrics counter bar is rendered.
+ *
+ *  "fixed-bottom" — pinned to the viewport bottom, always visible.
+ *  "sticky-top"   — rendered in document flow just below the filter bar;
+ *                   becomes sticky as the user scrolls past it.
+ *
+ * Change this constant to switch modes — no other edits needed.
+ */
+export const COUNTER_POSITION: CounterPosition = "sticky-top"; //fixed-bottom
+
+// ── Counter display config ────────────────────────────────────────────────────
+
+/**
+ * Counter display configuration — edit here to show/hide metrics in the bar.
+ * Not exposed to end users; change this constant to update what's visible.
+ */
+export const COUNTER_CONFIG: CounterConfig = {
   showTotalIncidents: true,
-  showJobsLost: true,
-  showFines: true,
-  showUsersAffected: true,
-  showCompanies: true,
+  showJobsLost:       true,
+  showFines:          true,
+  showUsersAffected:  false, // sparse data — hidden until coverage improves
+  showCompanies:      true,
 };
+
+/** @deprecated use COUNTER_CONFIG */
+export const DEFAULT_COUNTER_CONFIG = COUNTER_CONFIG;
 
 // ── Filter state ──────────────────────────────────────────────────────────────
 

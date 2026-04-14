@@ -70,7 +70,7 @@ export function FilterBar({
 
   return (
     <div
-      className={`border-b border-neutral-200 bg-white px-4 py-3 dark:border-neutral-800 dark:bg-neutral-900 ${
+      className={`border-b border-neutral-800 bg-neutral-900 px-4 py-3 ${
         isPending ? "opacity-60" : ""
       }`}
     >
@@ -87,7 +87,7 @@ export function FilterBar({
                 className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   isActive
                     ? TYPE_ACTIVE_STYLES[value]
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700"
+                    : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
                 }`}
               >
                 {label}
@@ -102,7 +102,7 @@ export function FilterBar({
             <select
               value={activeCountry}
               onChange={(e) => updateParam("country", e.target.value)}
-              className="rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+              className="rounded-md border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 focus:outline-none focus:ring-2 focus:ring-orange-500/40"
               aria-label="Filter by country"
             >
               <option value="all">All countries</option>
@@ -125,7 +125,7 @@ export function FilterBar({
               }
             }}
             onBlur={(e) => updateParam("q", e.target.value)}
-            className="w-36 rounded-md border border-neutral-200 bg-white px-3 py-1.5 text-sm placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:placeholder-neutral-500 sm:w-44"
+            className="w-36 rounded-md border border-neutral-700 bg-neutral-800 px-3 py-1.5 text-sm text-neutral-200 placeholder-neutral-500 focus:outline-none focus:ring-2 focus:ring-orange-500/40 sm:w-44"
             aria-label="Search incidents"
           />
 
@@ -137,7 +137,7 @@ export function FilterBar({
                 ? "Switch to single-column layout"
                 : "Switch to two-column layout"
             }
-            className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-800 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+            className="rounded-md border border-neutral-700 p-1.5 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200"
             aria-label="Toggle layout"
           >
             {activeLayout === "two-column" ? <SingleColIcon /> : <TwoColIcon />}

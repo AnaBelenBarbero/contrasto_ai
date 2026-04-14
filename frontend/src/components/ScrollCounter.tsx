@@ -13,12 +13,12 @@
  * and reveals a summary breakdown by incident type.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
 import { aggregateCounters, buildCounterTiles, formatUSD } from "@/lib/counters";
 import type { AggregatedCounters } from "@/lib/counters";
-import { useCounterSettings } from "@/hooks/useCounterSettings";
-import { SettingsPanel } from "./SettingsPanel";
+import { COUNTER_CONFIG, COUNTER_POSITION } from "@/lib/types";
 import type { AnyIncident, CounterTotals } from "@/lib/types";
+import { NewsletterSignup } from "./NewsletterSignup";
 
 interface ScrollCounterProps {
   /** Currently loaded incidents — used for scroll-driven "seen so far" counting. */
@@ -66,6 +66,8 @@ function useAnimatedNumber(target: number): number {
 
 // ── Animated tile ─────────────────────────────────────────────────────────────
 
+type Direction = "up" | "down" | "idle";
+
 function AnimatedTile({
   label,
   rawValue,
@@ -76,9 +78,50 @@ function AnimatedTile({
   formatter: (n: number) => string;
 }) {
   const animated = useAnimatedNumber(rawValue);
+  const prevRef = useRef(rawValue);
+  // Increment key forces span remount → CSS animation replays from 0%
+  const [animKey, setAnimKey] = useState(0);
+  const [direction, setDirection] = useState<Direction>("idle");
+  const [showFlame, setShowFlame] = useState(false);
+  const flameTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const id = useId();
+
+  useEffect(() => {
+    const prev = prevRef.current;
+    prevRef.current = rawValue;
+    if (rawValue === prev) return;
+
+    const dir: Direction = rawValue > prev ? "up" : "down";
+    setDirection(dir);
+    setAnimKey((k) => k + 1);
+
+    if (dir === "up") {
+      // Show the floating flame particle
+      if (flameTimerRef.current) clearTimeout(flameTimerRef.current);
+      setShowFlame(true);
+      flameTimerRef.current = setTimeout(() => setShowFlame(false), 900);
+    }
+
+    return () => {
+      if (flameTimerRef.current) clearTimeout(flameTimerRef.current);
+    };
+  }, [rawValue]);
+
   return (
-    <div className="flex flex-col items-center leading-tight">
-      <span className="text-lg font-black tabular-nums text-white sm:text-xl">
+    <div className="relative flex flex-col items-center leading-tight" aria-live="polite" aria-atomic="true" aria-label={`${label}: ${formatter(rawValue)}`}>
+      {/* Floating flame on increase */}
+      {showFlame && (
+        <span key={`flame-${id}-${animKey}`} className="fire-particle" aria-hidden>
+          🔥
+        </span>
+      )}
+
+      <span
+        key={`num-${id}-${animKey}`}
+        className={`text-lg font-black tabular-nums sm:text-xl ${
+          direction === "up" ? "counter-burn" : direction === "down" ? "counter-cool" : "text-white"
+        }`}
+      >
         {formatter(animated)}
       </span>
       <span className="text-[10px] font-semibold uppercase tracking-widest text-neutral-400">
@@ -96,8 +139,6 @@ function dbTotalsToAggregated(t: CounterTotals): AggregatedCounters {
 }
 
 export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounterProps) {
-  const [config, updateConfig, resetConfig] = useCounterSettings();
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [grandTotalOpen, setGrandTotalOpen] = useState(false);
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set());
   const [showGrandTotal, setShowGrandTotal] = useState(false);
@@ -159,7 +200,7 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
   // Counter bar tiles: use DB grand totals when pinned, scroll totals otherwise
   const tiles = buildCounterTiles(
     showGrandTotal ? dbTotalsToAggregated(grandTotals) : seenTotals,
-    config
+    COUNTER_CONFIG
   );
 
   const handleToggleGrandTotal = useCallback(() => {
@@ -169,18 +210,6 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
 
   return (
     <>
-      {/* Settings panel — renders above the counter */}
-      {settingsOpen && (
-        <div className="fixed bottom-[68px] left-0 right-0 z-50">
-          <SettingsPanel
-            config={config}
-            onChange={updateConfig}
-            onReset={resetConfig}
-            onClose={() => setSettingsOpen(false)}
-          />
-        </div>
-      )}
-
       {/* Grand total overlay */}
       {grandTotalOpen && (
         <GrandTotalOverlay
@@ -193,9 +222,22 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
       )}
 
 
-      {/* Bottom counter bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800 bg-neutral-950/95 backdrop-blur-sm shadow-2xl">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-2.5">
+      {/* Counter bar — position driven by COUNTER_POSITION constant */}
+      <div
+        className={
+          COUNTER_POSITION === "fixed-bottom"
+            ? "fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-800 bg-neutral-950/95 shadow-2xl backdrop-blur-sm"
+            : "sticky top-0 z-20 border-b border-neutral-800 bg-neutral-950/95 shadow-md backdrop-blur-sm"
+        }
+        /* full-bleed when sticky-top so it spans the viewport like FilterBar */
+        style={
+          COUNTER_POSITION === "sticky-top"
+            ? { width: "100vw", marginLeft: "calc(50% - 50vw)" }
+            : undefined
+        }
+      >
+        {/* ── Row 1: mode label | metric tiles | grand total button ── */}
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-2">
 
           {/* Mode indicator */}
           <div className="flex flex-col leading-none">
@@ -214,60 +256,47 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
 
           {/* Metric tiles */}
           <div className="flex flex-1 flex-wrap items-center justify-around gap-x-4 gap-y-1">
-            {tiles.length === 0 ? (
-              <span className="text-xs text-neutral-500">
-                Enable counters via ⚙
-              </span>
-            ) : (
-              tiles.map((tile, i) => (
-                <div key={tile.key} className="flex items-center gap-4">
-                  {i > 0 && (
-                    <span
-                      aria-hidden
-                      className="hidden h-5 w-px bg-neutral-800 sm:block"
-                    />
-                  )}
-                  <AnimatedTile
-                    label={tile.label}
-                    rawValue={tile.raw}
-                    formatter={
-                      tile.key === "showFines"
-                        ? formatUSD
-                        : (n) => n.toLocaleString("en-US")
-                    }
-                  />
-                </div>
-              ))
-            )}
+            {tiles.map((tile, i) => (
+              <div key={tile.key} className="flex items-center gap-4">
+                {i > 0 && (
+                  <span aria-hidden className="hidden h-5 w-px bg-neutral-800 sm:block" />
+                )}
+                <AnimatedTile
+                  label={tile.label}
+                  rawValue={tile.raw}
+                  formatter={tile.key === "showFines" ? formatUSD : (n) => n.toLocaleString("en-US")}
+                />
+              </div>
+            ))}
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {/* Grand total button */}
-            <button
-              onClick={() => setGrandTotalOpen((o) => !o)}
-              title="Show grand total breakdown"
-              className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors ${
-                showGrandTotal
-                  ? "bg-amber-500 text-neutral-950 hover:bg-amber-400"
-                  : "bg-neutral-800 text-neutral-300 hover:bg-neutral-700 hover:text-white"
-              }`}
-            >
-              {showGrandTotal ? "↑ Grand Total" : "Grand Total ↑"}
-            </button>
-
-            {/* Settings */}
-            <button
-              onClick={() => setSettingsOpen((o) => !o)}
-              aria-label="Counter settings"
-              className="rounded-md p-1.5 text-neutral-400 hover:bg-neutral-800 hover:text-white"
-            >
-              <GearIcon />
-            </button>
-          </div>
+          {/* Grand Total button */}
+          <button
+            onClick={() => setGrandTotalOpen((o) => !o)}
+            title="Show all-time grand total breakdown"
+            className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold tracking-wide transition-all duration-200 ${
+              showGrandTotal
+                ? "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/40 hover:bg-amber-400"
+                : "border border-orange-500/60 bg-orange-950/50 text-orange-300 shadow-md shadow-orange-900/40 hover:border-orange-400 hover:bg-orange-900/60 hover:text-orange-100 hover:shadow-orange-500/30"
+            }`}
+          >
+            🔥 {showGrandTotal ? "Grand Total ↑" : "Grand Total"}
+          </button>
         </div>
 
-        {/* Scroll progress bar — denominator is full DB count, not just loaded page */}
+        {/* ── Row 2: newsletter signup ── */}
+        <div className="mx-auto flex max-w-5xl items-center gap-3 border-t border-neutral-800/60 px-4 py-1.5">
+          <span className="hidden flex-shrink-0 text-[10px] font-semibold text-neutral-500 sm:block">
+            AI is going just great —
+          </span>
+          <span className="hidden text-[10px] text-neutral-600 sm:block">
+            stay updated:
+          </span>
+          <div className="flex-1" />
+          <NewsletterSignup />
+        </div>
+
+        {/* ── Scroll progress bar ── */}
         <ScrollProgress seenCount={seenIds.size} total={dbTotal} />
       </div>
     </>
@@ -318,7 +347,7 @@ function GrandTotalOverlay({
   isPinned,
 }: GrandTotalOverlayProps) {
   return (
-    <div className="fixed bottom-[68px] left-0 right-0 z-50 flex justify-center px-4">
+    <div className="fixed bottom-[104px] left-0 right-0 z-50 flex justify-center px-4">
       <div className="w-full max-w-xl rounded-xl border border-neutral-700 bg-neutral-900 p-5 shadow-2xl">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
@@ -348,28 +377,18 @@ function GrandTotalOverlay({
           </p>
         </div>
 
-        {/* Breakdown grid */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatCard
-            value={totals.total_jobs_lost.toLocaleString("en-US")}
-            label="Jobs Lost"
-            color="text-amber-400"
-          />
-          <StatCard
-            value={formatUSD(totals.total_fines_usd)}
-            label="In Fines"
-            color="text-blue-400"
-          />
-          <StatCard
-            value={totals.total_users_affected.toLocaleString("en-US")}
-            label="Users Affected"
-            color="text-violet-400"
-          />
-          <StatCard
-            value={totals.model_failures.toLocaleString("en-US")}
-            label="Model Failures"
-            color="text-rose-400"
-          />
+        {/* Breakdown grid — mirrors COUNTER_CONFIG visibility */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {COUNTER_CONFIG.showJobsLost && (
+            <StatCard value={totals.total_jobs_lost.toLocaleString("en-US")} label="Jobs Lost"      color="text-amber-400" />
+          )}
+          {COUNTER_CONFIG.showFines && (
+            <StatCard value={formatUSD(totals.total_fines_usd)}              label="In Fines"       color="text-blue-400"  />
+          )}
+          {COUNTER_CONFIG.showUsersAffected && (
+            <StatCard value={totals.total_users_affected.toLocaleString("en-US")} label="Users Affected" color="text-violet-400" />
+          )}
+          <StatCard value={totals.model_failures.toLocaleString("en-US")}    label="Model Failures" color="text-rose-400"  />
         </div>
 
         {/* Type breakdown */}
@@ -435,21 +454,3 @@ function TypeCount({
   );
 }
 
-// ── Icons ─────────────────────────────────────────────────────────────────────
-
-function GearIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 20 20"
-      fill="currentColor"
-      className="h-4 w-4"
-    >
-      <path
-        fillRule="evenodd"
-        d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.295 1.473c.497.144.964.317 1.406.516l1.262-.756a1 1 0 011.22.164l1.668 1.667a1 1 0 01.164 1.22l-.756 1.262c.199.443.372.909.516 1.407l1.473.294A1 1 0 0119 10v2.36a1 1 0 01-.804.98l-1.473.295a8.02 8.02 0 01-.516 1.406l.756 1.262a1 1 0 01-.164 1.22l-1.667 1.668a1 1 0 01-1.22.164l-1.263-.756c-.442.199-.909.372-1.406.516l-.294 1.473a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.295-1.473a8.02 8.02 0 01-.516-1.406l-1.262.756a1 1 0 01-1.22-.164L2.99 17.64a1 1 0 01-.164-1.22l.756-1.263a8.02 8.02 0 01-.516-1.406L1.593 13.5A1 1 0 011 12.52V10.16a1 1 0 01.804-.98l1.473-.295c.144-.497.317-.964.516-1.406l-.756-1.262a1 1 0 01.164-1.22L4.868 3.33a1 1 0 011.22-.164l1.262.756c.443-.199.909-.372 1.407-.516L8.82 1.804zM10 13a3 3 0 100-6 3 3 0 000 6z"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-}
