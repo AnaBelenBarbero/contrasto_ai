@@ -287,7 +287,7 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
         {/* ── Row 2: newsletter signup ── */}
         <div className="mx-auto flex max-w-5xl items-center gap-3 border-t border-neutral-800/60 px-4 py-1.5">
           <span className="hidden flex-shrink-0 text-[10px] font-semibold text-neutral-500 sm:block">
-            AI is going just great —
+            AI is just fine —
           </span>
           <span className="hidden text-[10px] text-neutral-600 sm:block">
             stay updated:

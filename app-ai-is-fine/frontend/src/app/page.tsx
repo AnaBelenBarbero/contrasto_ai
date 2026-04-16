@@ -71,10 +71,10 @@ export default async function Page({ searchParams }: PageProps) {
           <div className="flex flex-1 flex-col gap-1">
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-                AI Is Going Just Great
+                AI Is Just Fine
               </h1>
-              {/* Theme toggle — top-right of header */}
-              <ThemeToggle className="mt-0.5 flex-shrink-0" />
+              {/* Theme toggle — top-right of header 
+              <ThemeToggle className="mt-0.5 flex-shrink-0" />*/}
             </div>
             <p className="max-w-lg text-sm text-neutral-400">
               A running timeline of AI harm, layoffs, regulatory actions &amp;
