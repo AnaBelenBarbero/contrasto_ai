@@ -163,6 +163,11 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
       const next = new Set<string>();
 
       document.querySelectorAll<HTMLElement>("[data-incident-id]").forEach((el) => {
+        // offsetParent is null for any element inside a display:none ancestor.
+        // Both layout variants (single/two-column) live in the DOM simultaneously;
+        // only the active one has a non-null offsetParent, so we skip the hidden one.
+        if (el.offsetParent === null) return;
+
         const cardTop = window.scrollY + el.getBoundingClientRect().top;
         if (cardTop < triggerY) {
           const id = el.getAttribute("data-incident-id");
