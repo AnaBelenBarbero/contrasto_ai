@@ -290,7 +290,7 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
             AI is just fine!
           </span>
           <span className="hidden text-[10px] text-neutral-600 sm:block">
-            stay updated:
+            Stay updated:
           </span>
           <div className="flex-1" />
           <NewsletterSignup />

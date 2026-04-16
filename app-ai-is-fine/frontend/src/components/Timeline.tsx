@@ -72,7 +72,18 @@ export function Timeline({ incidents, layout = "two-column" }: TimelineProps) {
   }
 
   if (layout === "two-column") {
-    return <TwoColumnTimeline incidents={incidents} />;
+    return (
+      <>
+        {/* Collapse to single column on small screens — the two-column layout
+            uses inline pixel styles that cannot adapt to narrow viewports. */}
+        <div className="md:hidden">
+          <SingleColumnTimeline incidents={incidents} />
+        </div>
+        <div className="hidden md:block">
+          <TwoColumnTimeline incidents={incidents} />
+        </div>
+      </>
+    );
   }
 
   return <SingleColumnTimeline incidents={incidents} />;

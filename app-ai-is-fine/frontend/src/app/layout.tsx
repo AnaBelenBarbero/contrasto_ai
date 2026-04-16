@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Is Just Fine — Incident Tracker",
+  title: "AI Is Just Fine! AI Incident Tracker",
   description:
-    "A running timeline of AI harm events, layoffs, regulatory actions, and model failures. " +
+    "A timeline of AI harm events, layoffs, regulatory actions, and model failures. " +
     "",
   openGraph: {
     title: "AI Is Just Fine. AI Incident and Layoff Tracker",

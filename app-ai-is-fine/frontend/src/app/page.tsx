@@ -77,7 +77,7 @@ export default async function Page({ searchParams }: PageProps) {
               <ThemeToggle className="mt-0.5 flex-shrink-0" />*/}
             </div>
             <p className="max-w-lg text-sm text-neutral-400">
-              A running timeline of AI harm, layoffs, regulatory actions &amp;
+              A timeline of AI harm, layoffs, regulatory actions &amp;
               model failures
             </p>
             <br />
@@ -85,7 +85,7 @@ export default async function Page({ searchParams }: PageProps) {
               <span className="font-semibold text-neutral-300">
                 {grandTotals.total_incidents.toLocaleString("en-US")}
               </span>{" "}
-              incidents tracked — scroll down to watch the counter burn 🔥
+              incidents tracked. Scroll down to watch the counter burn 🔥
             </p>
           </div>
         </div>
