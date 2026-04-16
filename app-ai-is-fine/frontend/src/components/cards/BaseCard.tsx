@@ -163,9 +163,12 @@ export function BaseCard({ incident, children }: BaseCardProps) {
                 </a>
               );
             })}
+            {/* Display incident source info as plain text 
             <span className="ml-auto text-[11px] text-neutral-400 dark:text-neutral-500">
               {incident.source}
             </span>
+            */}
+       
           </div>
         )}
       </div>
