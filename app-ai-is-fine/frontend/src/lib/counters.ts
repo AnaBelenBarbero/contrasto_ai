@@ -55,14 +55,14 @@ export function aggregateCounters(
         }
         break;
       }
-      case "model_failure": {
+      /*case "model_failure": {
         model_failures++;
         const meta = incident.metadata as { users_affected?: number | null };
         if (typeof meta.users_affected === "number") {
           total_users_affected += meta.users_affected;
         }
         break;
-      }
+      }*/
       case "ai_harm": {
         harm_incidents++;
         break;
@@ -75,7 +75,7 @@ export function aggregateCounters(
     layoff_events,
     harm_incidents,
     regulatory_actions,
-    model_failures,
+    //model_failures,
     total_jobs_lost,
     total_fines_usd,
     total_users_affected,

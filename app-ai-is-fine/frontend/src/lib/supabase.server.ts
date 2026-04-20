@@ -108,7 +108,7 @@ export async function fetchCounters(): Promise<CounterTotals> {
       layoff_events: 0,
       harm_incidents: 0,
       regulatory_actions: 0,
-      model_failures: 0,
+      //model_failures: 0,
       total_jobs_lost: 0,
       total_fines_usd: 0,
       total_users_affected: 0,

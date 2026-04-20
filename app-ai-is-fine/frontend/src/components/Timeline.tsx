@@ -3,7 +3,7 @@ import { INCIDENT_TYPE_COLORS } from "@/lib/types";
 import { AIHarmCard } from "./cards/AIHarmCard";
 import { LayoffCard } from "./cards/LayoffCard";
 import { RegulatoryCard } from "./cards/RegulatoryCard";
-import { ModelFailureCard } from "./cards/ModelFailureCard";
+//import { ModelFailureCard } from "./cards/ModelFailureCard";
 
 export type LayoutMode = "single" | "two-column";
 
