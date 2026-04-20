@@ -15,7 +15,7 @@ const ACCENT_CLASSES: Record<IncidentType, string> = {
   ai_harm: "bg-rose-500",
   layoff: "bg-amber-500",
   regulatory: "bg-blue-500",
-  model_failure: "bg-violet-500",
+  //model_failure: "bg-violet-500",
 };
 
 /**
