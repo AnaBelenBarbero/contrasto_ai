@@ -31,9 +31,10 @@ class AILayoffEvent(BaseIncident):
         description="Industry sector of the affected workforce, e.g. 'Technology', 'Finance'.",
     )
     jobs_lost: int = Field(
-        ge=1,
+        ge=0,
         description="Confirmed or estimated headcount reduction. "
-        "For phased cuts, use the total announced figure.",
+        "For phased cuts, use the total announced figure. "
+        "May be 0 when jobs_lost_to_be_confirmed is True and the final figure is unknown.",
     )
     ai_automation_confirmed: bool = Field(
         description="True if AI/automation was explicitly cited as a cause by the company "
@@ -52,10 +53,10 @@ class AILayoffEvent(BaseIncident):
 
     @field_validator("jobs_lost")
     @classmethod
-    def jobs_must_be_positive(cls, v: int) -> int:
-        """Jobs lost must represent at least one person."""
-        if v < 1:
-            raise ValueError("jobs_lost must be ≥ 1")
+    def jobs_must_be_non_negative(cls, v: int) -> int:
+        """Jobs lost must be ≥ 0; 0 is only valid when the count is still to be confirmed."""
+        if v < 0:
+            raise ValueError("jobs_lost must be ≥ 0")
         return v
 
     def to_db_row(self) -> dict:

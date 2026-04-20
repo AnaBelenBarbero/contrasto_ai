@@ -22,15 +22,10 @@ export function LayoffCard({ incident }: LayoffCardProps) {
         {/* Jobs lost — big number */}
         <div>
           <p className="text-2xl font-black tabular-nums text-amber-600 dark:text-amber-400">
-            {formatCount(jobs_lost)}
+            {jobs_lost_to_be_confirmed ? "TBC" : formatCount(jobs_lost)}
           </p>
           <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
             jobs lost
-            {jobs_lost_to_be_confirmed && (
-              <span className="ml-1 italic text-neutral-400 dark:text-neutral-500">
-                (to be confirmed)
-              </span>
-            )}
           </p>
         </div>
 
