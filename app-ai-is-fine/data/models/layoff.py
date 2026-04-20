@@ -43,6 +43,12 @@ class AILayoffEvent(BaseIncident):
         default=None,
         description="Optional self-assessed severity label.",
     )
+    jobs_lost_to_be_confirmed: bool | None = Field(
+        default=None,
+        description="True when the jobs_lost figure has not yet been formally agreed "
+        "with unions or confirmed by the company — e.g. an ERE announced but still "
+        "under negotiation. Null or False means the figure is confirmed.",
+    )
 
     @field_validator("jobs_lost")
     @classmethod
@@ -60,5 +66,6 @@ class AILayoffEvent(BaseIncident):
             "jobs_lost": self.jobs_lost,
             "ai_automation_confirmed": self.ai_automation_confirmed,
             "severity": self.severity,
+            "jobs_lost_to_be_confirmed": self.jobs_lost_to_be_confirmed,
         }
         return row

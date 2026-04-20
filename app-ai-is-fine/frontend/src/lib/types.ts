@@ -28,6 +28,7 @@ export interface LayoffMetadata {
   jobs_lost: number;
   ai_automation_confirmed: boolean;
   severity?: string | null;
+  jobs_lost_to_be_confirmed?: boolean | null;
 }
 
 export interface RegulatoryMetadata {

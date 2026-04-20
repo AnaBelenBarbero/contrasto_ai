@@ -13,7 +13,7 @@ interface LayoffCardProps {
  * dollar counter on web3isgoinggreat — to convey human impact at a glance.
  */
 export function LayoffCard({ incident }: LayoffCardProps) {
-  const { sector, jobs_lost, ai_automation_confirmed, severity } =
+  const { sector, jobs_lost, ai_automation_confirmed, severity, jobs_lost_to_be_confirmed } =
     incident.metadata;
 
   return (
@@ -26,6 +26,11 @@ export function LayoffCard({ incident }: LayoffCardProps) {
           </p>
           <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
             jobs lost
+            {jobs_lost_to_be_confirmed && (
+              <span className="ml-1 italic text-neutral-400 dark:text-neutral-500">
+                (to be confirmed)
+              </span>
+            )}
           </p>
         </div>
 

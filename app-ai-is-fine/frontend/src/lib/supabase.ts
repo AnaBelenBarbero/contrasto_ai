@@ -16,7 +16,7 @@ import type { AnyIncident } from "./types";
 // ── Shared constants ──────────────────────────────────────────────────────────
 
 /** Rows returned per page by both server and browser fetch functions. */
-export const PAGE_SIZE = 100;
+export const PAGE_SIZE = 50;
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 
