@@ -42,7 +42,7 @@ const SPINE_ICONS: Record<IncidentType, string> = {
   ai_harm: "⚠",
   layoff: "↓",
   regulatory: "⚖",
-  model_failure: "⚡",
+  //model_failure: "⚡",
 };
 
 /**
@@ -277,8 +277,8 @@ function IncidentCard({ incident }: { incident: AnyIncident }) {
       return <LayoffCard incident={incident} />;
     case "regulatory":
       return <RegulatoryCard incident={incident} />;
-    case "model_failure":
-      return <ModelFailureCard incident={incident} />;
+    //case "model_failure":
+    //  return <ModelFailureCard incident={incident} />;
   }
 }
 

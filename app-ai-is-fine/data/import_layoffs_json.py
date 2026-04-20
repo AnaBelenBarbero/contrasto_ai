@@ -17,9 +17,11 @@ JSON fields used:
     country         Full country name → countries list
     jobsLost        Headcount reduction
     aiAttribution   "EXPLICIT" | "MIXED" | "INDIRECT" → ai_automation_confirmed
+    imageUrl        Image URL
     sourceLabel     Link label
     sourceUrl       Primary source URL
     estimate        Whether the figure is an estimate (stored in description)
+    jobsLostToBeConfirmed True when the jobs_lost figure has not yet been formally agreed with unions or confirmed by the company — e.g. an ERE announced but still under negotiation. False means the figure is confirmed.
 """
 
 from __future__ import annotations
@@ -49,9 +51,12 @@ def make_slug(report_id: int) -> str:
 
 def make_description(r: dict) -> str:
     """Build a human-readable description from available fields."""
-    jobs = r["jobsLost"]
+    jobs = r.get("jobsLost", 0)
     company = r["company"]
-    estimate_note = " (estimated)" if r.get("estimate") else ""
+    tbc = r.get("jobsLostToBeConfirmed", False)
+    jobs_phrase = "an undisclosed number of" if tbc and not jobs else f"{jobs:,}"
+    estimate_note = " (estimated)" if r.get("estimate") and not tbc else ""
+    tbc_note = " (count to be confirmed)" if tbc else ""
     attribution = r.get("aiAttribution", "")
     attribution_phrases = {
         "EXPLICIT": "explicitly attributed to AI/automation",
@@ -60,8 +65,8 @@ def make_description(r: dict) -> str:
     }
     attr_note = attribution_phrases.get(attribution, "linked to AI")
     workforce = r.get("workforce")
-    pct = f" ({round(jobs / workforce * 100)}% of workforce)" if workforce and workforce > 0 else ""
-    return f"{company} cut {jobs:,} jobs{pct}{estimate_note}, {attr_note}."
+    pct = f" ({round(jobs / workforce * 100)}% of workforce)" if workforce and workforce > 0 and jobs > 0 else ""
+    return f"{company} cut {jobs_phrase} jobs{pct}{estimate_note}{tbc_note}, {attr_note}."
 
 
 def row_to_incident(r: dict) -> AILayoffEvent | None:
@@ -72,27 +77,32 @@ def row_to_incident(r: dict) -> AILayoffEvent | None:
         return None
 
     jobs_lost = r.get("jobsLost", 0)
-    if not jobs_lost or jobs_lost < 1:
+    tbc = r.get("jobsLostToBeConfirmed", False)
+
+    # Skip rows with no job count unless the count is explicitly flagged as TBC.
+    if not tbc and (not jobs_lost or jobs_lost < 1):
         return None
 
     source_url = r.get("sourceUrl", "")
     source_label = r.get("sourceLabel", "Source")
+    jobs_label = "an undisclosed number of" if tbc and not jobs_lost else f"{jobs_lost:,}"
 
     return AILayoffEvent(
         id=make_slug(r["id"]),
         date=date,
-        title=f"{r['company']} lays off {jobs_lost:,} workers",
+        title=f"{r['company']} lays off {jobs_label} workers",
         description=make_description(r),
         source=f"{source_label} — {source_url}" if source_url else source_label,
         links=[source_url] if source_url else [],
         tags=["layoff", r.get("industry", "").lower().replace(" ", "-")],
         countries=[r["country"]] if r.get("country") else [],
         companies=[r["company"]],
-        image_url=None,
+        image_url=r.get("imageUrl", None),
         sector=r.get("industry", "Unknown"),
         jobs_lost=jobs_lost,
         ai_automation_confirmed=r.get("aiAttribution") == "EXPLICIT",
         severity=None,
+        jobs_lost_to_be_confirmed=tbc or None,
     )
 
 
@@ -148,9 +158,11 @@ def main() -> None:
 
     print(f"Parsed {len(incidents)} layoff events. Skipped: {len(skipped)} ({skipped[:10]})")
 
-    total_jobs = sum(i.jobs_lost for i in incidents)
+    total_jobs = sum(i.jobs_lost for i in incidents if not i.jobs_lost_to_be_confirmed)
+    tbc_count = sum(1 for i in incidents if i.jobs_lost_to_be_confirmed)
     explicit = sum(1 for i in incidents if i.ai_automation_confirmed)
-    print(f"Total jobs lost: {total_jobs:,} | Explicitly AI-attributed: {explicit}/{len(incidents)}")
+    tbc_note = f" + {tbc_count} TBC" if tbc_count else ""
+    print(f"Total jobs lost: {total_jobs:,}{tbc_note} | Explicitly AI-attributed: {explicit}/{len(incidents)}")
 
     if args.dry_run:
         print("--dry-run: no output written.")
