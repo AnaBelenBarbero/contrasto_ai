@@ -12,7 +12,7 @@ export type IncidentType =
   | "ai_harm"
   | "layoff"
   | "regulatory"
-  | "model_failure";
+  //| "model_failure";
 
 // ── Per-type metadata shapes ──────────────────────────────────────────────────
 
@@ -80,16 +80,16 @@ export interface RegulatoryIncident extends Omit<BaseIncident, "metadata"> {
   metadata: RegulatoryMetadata;
 }
 
-export interface ModelFailureIncident extends Omit<BaseIncident, "metadata"> {
-  incident_type: "model_failure";
-  metadata: ModelFailureMetadata;
-}
+//export interface ModelFailureIncident extends Omit<BaseIncident, "metadata"> {
+//  incident_type: "model_failure";
+//  metadata: ModelFailureMetadata;
+//}
 
 export type AnyIncident =
   | AIHarmIncident
   | LayoffIncident
   | RegulatoryIncident
-  | ModelFailureIncident;
+  //| ModelFailureIncident;
 
 // ── Counters (from v_counters view) ──────────────────────────────────────────
 
@@ -98,7 +98,7 @@ export interface CounterTotals {
   layoff_events: number;
   harm_incidents: number;
   regulatory_actions: number;
-  model_failures: number;
+  //model_failures: number;
   total_jobs_lost: number;
   total_fines_usd: number;
   total_users_affected: number;
@@ -168,11 +168,11 @@ export function isRegulatoryIncident(i: AnyIncident): i is RegulatoryIncident {
   return i.incident_type === "regulatory";
 }
 
-export function isModelFailureIncident(
-  i: AnyIncident
-): i is ModelFailureIncident {
-  return i.incident_type === "model_failure";
-}
+//export function isModelFailureIncident(
+//  i: AnyIncident
+//): i is ModelFailureIncident {
+//  return i.incident_type === "model_failure";
+//}
 
 // ── Display helpers ───────────────────────────────────────────────────────────
 
@@ -180,7 +180,7 @@ export const INCIDENT_TYPE_LABELS: Record<IncidentType, string> = {
   ai_harm: "AI Harm",
   layoff: "Layoff",
   regulatory: "Regulatory",
-  model_failure: "Model Failure",
+  //model_failure: "Model Failure",
 };
 
 export const INCIDENT_TYPE_COLORS: Record<
@@ -202,9 +202,9 @@ export const INCIDENT_TYPE_COLORS: Record<
     badge: "bg-blue-100 text-blue-800",
     badgeDark: "dark:bg-blue-900/40 dark:text-blue-300",
   },
-  model_failure: {
-    border: "border-violet-500",
-    badge: "bg-violet-100 text-violet-800",
-    badgeDark: "dark:bg-violet-900/40 dark:text-violet-300",
-  },
+  //model_failure: {
+  //  border: "border-violet-500",
+  //  badge: "bg-violet-100 text-violet-800",
+  //  badgeDark: "dark:bg-violet-900/40 dark:text-violet-300",
+  //},
 };

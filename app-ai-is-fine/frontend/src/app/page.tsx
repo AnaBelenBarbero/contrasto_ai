@@ -77,8 +77,7 @@ export default async function Page({ searchParams }: PageProps) {
               <ThemeToggle className="mt-0.5 flex-shrink-0" />*/}
             </div>
             <p className="max-w-lg text-sm text-neutral-400">
-              A timeline of AI harm, layoffs, regulatory actions &amp;
-              model failures
+              A timeline of AI harm, layoffs and regulatory actions
             </p>
             <br />
             <p className="text-xs text-neutral-500">

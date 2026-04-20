@@ -245,7 +245,7 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
         <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-2">
 
           {/* Mode indicator */}
-          <div className="flex flex-col leading-none">
+          <div className="hidden sm:flex flex-col leading-none">
             <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-500">
               {showGrandTotal ? "all time" : "seen so far"}
             </span>
@@ -257,7 +257,7 @@ export function ScrollCounter({ incidents, grandTotals, dbTotal }: ScrollCounter
           </div>
 
           {/* Separator */}
-          <span className="h-8 w-px bg-neutral-800" />
+          <span className="hidden sm:block h-8 w-px bg-neutral-800" />
 
           {/* Metric tiles */}
           <div className="flex flex-1 flex-wrap items-center justify-around gap-x-4 gap-y-1">
@@ -383,7 +383,7 @@ function GrandTotalOverlay({
         </div>
 
         {/* Breakdown grid — mirrors COUNTER_CONFIG visibility */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
           {COUNTER_CONFIG.showJobsLost && (
             <StatCard value={totals.total_jobs_lost.toLocaleString("en-US")} label="Jobs Lost"      color="text-amber-400" />
           )}
@@ -393,15 +393,15 @@ function GrandTotalOverlay({
           {COUNTER_CONFIG.showUsersAffected && (
             <StatCard value={totals.total_users_affected.toLocaleString("en-US")} label="Users Affected" color="text-violet-400" />
           )}
-          <StatCard value={totals.model_failures.toLocaleString("en-US")}    label="Model Failures" color="text-rose-400"  />
+          {/*<StatCard value={totals.model_failures.toLocaleString("en-US")}    label="Model Failures" color="text-rose-400"  />*/}
         </div>
 
         {/* Type breakdown */}
-        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-neutral-700 pt-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-2 border-t border-neutral-700 pt-4 sm:grid-cols-3">
           <TypeCount label="AI Harm" value={totals.harm_incidents} dot="bg-rose-500" />
           <TypeCount label="Layoffs" value={totals.layoff_events} dot="bg-amber-500" />
           <TypeCount label="Regulatory" value={totals.regulatory_actions} dot="bg-blue-500" />
-          <TypeCount label="Model Failures" value={totals.model_failures} dot="bg-violet-500" />
+          {/*<TypeCount label="Model Failures" value={totals.model_failures} dot="bg-violet-500" />*/}
         </div>
 
         {/* Pin button */}

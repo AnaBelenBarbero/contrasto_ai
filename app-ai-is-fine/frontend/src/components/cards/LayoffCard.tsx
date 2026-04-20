@@ -25,7 +25,7 @@ export function LayoffCard({ incident }: LayoffCardProps) {
             {jobs_lost_to_be_confirmed ? "TBC" : formatCount(jobs_lost)}
           </p>
           <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
-            jobs lost
+            {jobs_lost_to_be_confirmed ? "Count to be confirmed" : "jobs lost"}
           </p>
         </div>
 

@@ -15,7 +15,7 @@ export function AIHarmCard({ incident }: AIHarmCardProps) {
     incident.metadata;
 
   return (
-    <BaseCard incident={incident}>
+    <BaseCard incident={incident} hideChipsAndTags>
       <div className="flex flex-col gap-2">
         {/* Harm categories */}
         {harm_categories.length > 0 && (

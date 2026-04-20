@@ -6,6 +6,8 @@ interface BaseCardProps {
   incident: AnyIncident;
   /** Type-specific detail section rendered below the description */
   children?: React.ReactNode;
+  /** When true, hides the company/country chips and hashtag rows */
+  hideChipsAndTags?: boolean;
 }
 
 /** Top-accent colour strip per incident type. */
@@ -23,7 +25,7 @@ const ACCENT_CLASSES: Record<IncidentType, string> = {
  * metadata block, company/country chips, source links.
  * No left border — the center spine provides type context in two-column mode.
  */
-export function BaseCard({ incident, children }: BaseCardProps) {
+export function BaseCard({ incident, children, hideChipsAndTags = false }: BaseCardProps) {
   const colors = INCIDENT_TYPE_COLORS[incident.incident_type];
   const typeLabel = INCIDENT_TYPE_LABELS[incident.incident_type];
   const accent = ACCENT_CLASSES[incident.incident_type];
@@ -107,7 +109,7 @@ export function BaseCard({ incident, children }: BaseCardProps) {
         )}
 
         {/* Company + country chips */}
-        {(incident.companies.length > 0 || incident.countries.length > 0) && (
+        {!hideChipsAndTags && (incident.companies.length > 0 || incident.countries.length > 0) && (
           <div className="flex flex-wrap gap-1.5">
             {incident.companies.slice(0, 4).map((company) => (
               <Chip key={company} label={company} variant="company" />
@@ -125,7 +127,7 @@ export function BaseCard({ incident, children }: BaseCardProps) {
         )}
 
         {/* Tags */}
-        {incident.tags.length > 0 && (
+        {!hideChipsAndTags && incident.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {incident.tags.map((tag) => (
               <span

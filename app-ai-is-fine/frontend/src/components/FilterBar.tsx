@@ -26,7 +26,7 @@ const TYPE_OPTIONS: Array<{ value: IncidentType | "all"; label: string }> = [
   { value: "ai_harm", label: INCIDENT_TYPE_LABELS.ai_harm },
   { value: "layoff", label: INCIDENT_TYPE_LABELS.layoff },
   { value: "regulatory", label: INCIDENT_TYPE_LABELS.regulatory },
-  { value: "model_failure", label: INCIDENT_TYPE_LABELS.model_failure },
+  //{ value: "model_failure", label: INCIDENT_TYPE_LABELS.model_failure },
 ];
 
 const TYPE_ACTIVE_STYLES: Record<string, string> = {
@@ -34,7 +34,7 @@ const TYPE_ACTIVE_STYLES: Record<string, string> = {
   ai_harm: "bg-rose-500 text-white",
   layoff: "bg-amber-500 text-white",
   regulatory: "bg-blue-500 text-white",
-  model_failure: "bg-violet-500 text-white",
+  //model_failure: "bg-violet-500 text-white",
 };
 
 /** Hover styles for inactive pills — tinted preview of the type colour. */
@@ -43,7 +43,7 @@ const TYPE_HOVER_STYLES: Record<string, string> = {
   ai_harm: "hover:bg-rose-500/20 hover:text-rose-300",
   layoff: "hover:bg-amber-500/20 hover:text-amber-300",
   regulatory: "hover:bg-blue-500/20 hover:text-blue-300",
-  model_failure: "hover:bg-violet-500/20 hover:text-violet-300",
+  //model_failure: "hover:bg-violet-500/20 hover:text-violet-300",
 };
 
 /**
@@ -56,7 +56,7 @@ const TYPE_PENDING_OVERLAY: Record<string, string> = {
   ai_harm: "bg-rose-500/10",
   layoff: "bg-amber-500/10",
   regulatory: "bg-blue-500/10",
-  model_failure: "bg-violet-500/10",
+  //model_failure: "bg-violet-500/10",
 };
 
 export function FilterBar({
@@ -112,7 +112,7 @@ export function FilterBar({
           isPending ? "opacity-100" : "opacity-0"
         }`}
       />
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+      <div className="mx-auto flex max-w-5xl flex-row items-center gap-4">
         {/* Type pills */}
         <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by type">
           {TYPE_OPTIONS.map(({ value, label }) => {
@@ -134,7 +134,7 @@ export function FilterBar({
           })}
         </div>
 
-        <div className="flex flex-1 items-center justify-end gap-3">
+        <div className="hidden sm:flex flex-1 items-center justify-end gap-3">
           {/* Country selector */}
           {countries.length > 0 && (
             <select
