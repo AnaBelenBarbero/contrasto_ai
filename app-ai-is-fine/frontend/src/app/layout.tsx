@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+  ),
   title: "AI Is Fine! | AI Incident Tracker",
   description:
     "A timeline of AI harm events, layoffs and regulatory actions." +
@@ -11,6 +14,21 @@ export const metadata: Metadata = {
     description:
       "Track AI harm, layoffs and regulatory fines in real time.",
     type: "website",
+    images: [
+      {
+        url: "/ai_is_fine.jpg",
+        width: 1200,
+        height: 630,
+        alt: "AI Is Fine!",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "AI Is Fine! | AI Incident and Layoff Tracker",
+    description:
+      "Track AI harm, layoffs and regulatory fines in real time.",
+    images: ["/ai_is_fine.jpg"],
   },
 };
 
@@ -47,7 +65,7 @@ export default function RootLayout({
         {/* FOUC prevention: must run before first paint */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="min-h-screen bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-50">
+      <body className="min-h-screen overflow-x-hidden bg-white text-neutral-900 antialiased dark:bg-neutral-950 dark:text-neutral-50">
         {children}
       </body>
     </html>

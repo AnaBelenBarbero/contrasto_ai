@@ -73,6 +73,7 @@ export async function fetchIncidents(opts: FetchOpts = {}): Promise<FetchResult>
     .from("incidents")
     .select("*")
     .order("date", { ascending: false })
+    .neq("incident_type", "model_failure")
     .range(from, from + pageSize - 1);
 
   if (opts.type && opts.type !== "all") query = query.eq("incident_type", opts.type);

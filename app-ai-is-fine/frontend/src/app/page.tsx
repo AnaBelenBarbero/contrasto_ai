@@ -2,9 +2,10 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { fetchCountries, fetchIncidents, fetchCounters } from "@/lib/supabase.server";
 import { PAGE_SIZE } from "@/lib/supabase";
+import { generatePageToken } from "@/lib/page-token";
 import { FilterBar } from "@/components/FilterBar";
 import { IncidentFeed } from "@/components/IncidentFeed";
-import { ThemeToggle } from "@/components/ThemeToggle";
+//import { ThemeToggle } from "@/components/ThemeToggle";
 import { COUNTER_POSITION } from "@/lib/types";
 import type { LayoutMode } from "@/components/Timeline";
 
@@ -28,6 +29,13 @@ interface PageProps {
 }
 
 export default async function Page({ searchParams }: PageProps) {
+  // Kick off filter-independent fetches immediately — before awaiting searchParams.
+  // fetchCountries and fetchCounters don't need any URL params, so they start
+  // in parallel with the searchParams resolution instead of waiting for it.
+  const countriesPromise = fetchCountries();
+  const countersPromise = fetchCounters();
+  const pageToken = generatePageToken();
+
   const params = await searchParams;
   const activeType = params.type ?? "all";
   const activeCountry = params.country ?? "all";
@@ -35,12 +43,12 @@ export default async function Page({ searchParams }: PageProps) {
   const activeLayout: LayoutMode =
     params.layout === "single" ? "single" : "two-column";
 
-  // Fetch first page + country list + DB grand totals in parallel
+  // fetchIncidents needs the resolved filter params — starts here, joins the others.
   const [{ data: initialIncidents, hasMore: initialHasMore }, countries, grandTotals] =
     await Promise.all([
       fetchIncidents({ type: activeType, country: activeCountry, page: 0, pageSize: PAGE_SIZE }),
-      fetchCountries(),
-      fetchCounters(),
+      countriesPromise,
+      countersPromise,
     ]);
 
   return (
@@ -119,6 +127,7 @@ export default async function Page({ searchParams }: PageProps) {
           country={activeCountry}
           search={activeSearch}
           layout={activeLayout}
+          pageToken={pageToken}
         />
       </main>
 

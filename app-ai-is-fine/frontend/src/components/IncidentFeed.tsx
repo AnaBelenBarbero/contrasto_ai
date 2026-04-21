@@ -13,7 +13,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchIncidentsBrowser, PAGE_SIZE } from "@/lib/supabase";
+import { fetchIncidentsApi, PAGE_SIZE } from "@/lib/supabase";
 import { Timeline } from "./Timeline";
 import { ScrollCounter } from "./ScrollCounter";
 import type { LayoutMode } from "./Timeline";
@@ -32,6 +32,8 @@ interface IncidentFeedProps {
   country: string;
   search: string;
   layout: LayoutMode;
+  /** HMAC token issued by the server — sent as X-Page-Token on paginated fetches. */
+  pageToken: string;
   pageSize?: number;
 }
 
@@ -44,6 +46,7 @@ export function IncidentFeed({
   country,
   search,
   layout,
+  pageToken,
   pageSize = PAGE_SIZE,
 }: IncidentFeedProps) {
   const [incidents, setIncidents] = useState<AnyIncident[]>(initialIncidents);
@@ -66,19 +69,17 @@ export function IncidentFeed({
     setLoading(true);
 
     const nextPage = page + 1;
-    const { data, hasMore: more } = await fetchIncidentsBrowser({
-      type,
-      country,
-      page: nextPage,
-      pageSize,
-    });
+    const { data, hasMore: more } = await fetchIncidentsApi(
+      { type, country, page: nextPage, pageSize },
+      pageToken,
+    );
 
     setIncidents((prev) => [...prev, ...data]);
     setPage(nextPage);
     setHasMore(more);
     setLoading(false);
     loadingRef.current = false;
-  }, [hasMore, page, type, country, pageSize]);
+  }, [hasMore, page, type, country, pageSize, pageToken]);
 
   // Observe the sentinel; fires when the user scrolls within ~300 px of the end
   useEffect(() => {
@@ -89,7 +90,7 @@ export function IncidentFeed({
       ([entry]) => {
         if (entry.isIntersecting) loadMore();
       },
-      { rootMargin: "300px" }
+      { rootMargin: "800px" }
     );
 
     observer.observe(sentinel);

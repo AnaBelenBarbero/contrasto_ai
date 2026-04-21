@@ -1,16 +1,12 @@
 /**
- * Browser-safe Supabase helpers.
+ * Browser-safe helpers shared between Server and Client Components.
  *
  * This file must NOT import from "next/headers" or any server-only module.
- * It is imported by both Server and Client Components.
  *
- * Server-only helpers (fetchIncidents, fetchCounters, fetchCountries) live in
- * supabase.server.ts — import from there only in Server Components / Route Handlers.
+ * Supabase is never called directly from the browser — all paginated fetches
+ * go through /api/incidents so the anon key stays server-side only.
  */
 
-import {
-  createBrowserClient as _createBrowserClient,
-} from "@supabase/ssr";
 import type { AnyIncident } from "./types";
 
 // ── Shared constants ──────────────────────────────────────────────────────────
@@ -34,56 +30,33 @@ export interface FetchResult {
   hasMore: boolean;
 }
 
-// ── Browser client ────────────────────────────────────────────────────────────
-
-function getEnv(): { url: string; anonKey: string } {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anonKey) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. " +
-        "Copy .env.local.example to .env.local and fill in your credentials."
-    );
-  }
-  return { url, anonKey };
-}
+// ── Client data-fetching (via Route Handler) ──────────────────────────────────
 
 /**
- * Supabase browser client — safe to instantiate in Client Components.
- * Uses the public anon key; RLS prevents unauthorised writes.
- */
-export function createBrowserClient() {
-  const { url, anonKey } = getEnv();
-  return _createBrowserClient(url, anonKey);
-}
-
-// ── Browser data-fetching ─────────────────────────────────────────────────────
-
-/**
- * Fetch one page of incidents from the browser (anon key, no cookies).
+ * Fetch one page of incidents from the browser via the /api/incidents Route Handler.
+ * The Supabase anon key never leaves the server — this is a plain fetch to our own API.
+ * Sends the HMAC page token issued at render time so the Route Handler can verify
+ * the request originated from a real page load.
  * Call from Client Components — e.g. inside IncidentFeed for infinite scroll.
  */
-export async function fetchIncidentsBrowser(opts: FetchOpts = {}): Promise<FetchResult> {
-  const client = createBrowserClient();
-  const pageSize = opts.pageSize ?? PAGE_SIZE;
-  const from = (opts.page ?? 0) * pageSize;
+export async function fetchIncidentsApi(
+  opts: FetchOpts = {},
+  pageToken?: string,
+): Promise<FetchResult> {
+  const params = new URLSearchParams();
+  if (opts.type) params.set("type", opts.type);
+  if (opts.country) params.set("country", opts.country);
+  if (opts.page !== undefined) params.set("page", String(opts.page));
+  if (opts.pageSize !== undefined) params.set("pageSize", String(opts.pageSize));
 
-  let query = client
-    .from("incidents")
-    .select("*")
-    .order("date", { ascending: false })
-    .range(from, from + pageSize - 1);
+  const headers: HeadersInit = {};
+  if (pageToken) headers["x-page-token"] = pageToken;
 
-  if (opts.type && opts.type !== "all") query = query.eq("incident_type", opts.type);
-  if (opts.country && opts.country !== "all") query = query.contains("countries", [opts.country]);
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("fetchIncidentsBrowser error:", error.message);
+  const res = await fetch(`/api/incidents?${params}`, { headers });
+  if (!res.ok) {
+    console.error("fetchIncidentsApi error:", res.status, res.statusText);
     return { data: [], hasMore: false };
   }
 
-  const rows = (data ?? []) as AnyIncident[];
-  return { data: rows, hasMore: rows.length === pageSize };
+  return res.json() as Promise<FetchResult>;
 }

@@ -105,7 +105,7 @@ export function FilterBar({
     TYPE_PENDING_OVERLAY[pendingTypeRef.current] ?? TYPE_PENDING_OVERLAY.all;
 
   return (
-    <div className="relative border-b border-neutral-800 bg-neutral-900 px-4 py-3">
+    <div className="relative overflow-x-hidden border-b border-neutral-800 bg-neutral-900 px-4 py-3">
       {/* Coloured wash that fades in while a navigation is pending */}
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-300 ${pendingOverlay} ${
