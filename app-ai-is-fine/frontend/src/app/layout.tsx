@@ -17,8 +17,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/ai_is_fine.jpg",
-        width: 1200,
-        height: 630,
+        width: 784,
+        height: 1168,
         alt: "AI Is Fine!",
       },
     ],
